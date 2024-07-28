@@ -3,13 +3,18 @@ package com.example.examplemod;
 //? if fabric
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-//? if forge
-/*import net.minecraftforge.fml.ModList;*/
-//? if neoforge
-/*import net.neoforged.fml.ModList;*/
+//? if forge {
+/*import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod;
+*///?} if neoforge {
+/*import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.Mod;
+*///?}
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//? if forge || neoforge
+/*@Mod(ExampleMod.MOD_ID)*/
 public class ExampleMod {
     public static final String MOD_ID = "examplemod";
     public static final Logger LOGGER = LoggerFactory.getLogger(getDisplayName(MOD_ID));
