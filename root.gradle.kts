@@ -5,7 +5,7 @@ plugins {
 }
 
 val packageJar by tasks.creating(Copy::class) {
-    into("${layout.buildDirectory}/libs/")
+    into("${layout.buildDirectory.get()}/libs/${E.p["mod_version"]}")
 }
 
 
@@ -39,6 +39,12 @@ subprojects {
         versionStr.toString().toInt()
     }
     afterEvaluate {
-        tasks.getByName("build").dependsOn(packageJar)
+        val remapJar = project.tasks.findByName("remapJar")
+        System.out.println(remapJar)
+        if (remapJar != null && remapJar.hasProperty("archiveFile")) {
+            packageJar.dependsOn(remapJar)
+            packageJar.from(remapJar.withGroovyBuilder { getProperty("archiveFile") })
+        }
+        project.tasks.findByName("build")?.finalizedBy(packageJar)
     }
 }

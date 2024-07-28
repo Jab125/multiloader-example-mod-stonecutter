@@ -1,5 +1,7 @@
 package com.example.examplemod;
 
+import net.minecraft.client.Minecraft;
+
 //#if LOADER == FORGE
 //$$ import net.minecraftforge.fml.common.Mod;
 //#elseif LOADER == NEOFORGE
@@ -26,6 +28,7 @@ public class ExampleMod {
         //$$ String loader = "NeoForge";
         //#endif
         System.out.printf("Hello %s World!%n", loader);
+        System.out.println("Minecraft: " + Minecraft.instance);
         //System.out.println("\u0022");
     }
 }
