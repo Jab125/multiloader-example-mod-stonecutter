@@ -1,4 +1,4 @@
-# Multiloader Example Mod
+# Multiloader Example Mod (Preprocessor)
 
 ## Setup
 Run `./gradlew validateAccessWidener` first to generate the access wideners. You will have to do this every time you modify the access widener.
