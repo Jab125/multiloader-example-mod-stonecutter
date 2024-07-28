@@ -101,8 +101,8 @@ dependencies {
 afterEvaluate {
     def hasApplicableMixinExtras = project.getConfigurations().getByName("runtimeClasspath").getAllDependencies().stream().anyMatch(a -> {
         return a.getName().startsWith("mixinextras") && a.getGroup().equals("io.github.llamalad7") && new Version(a.getVersion()) >= (new Version(rootProject.properties.mixinextras.toString()))
-    });
-    System.out.println("ME: " + hasApplicableMixinExtras)
+    })
+
     if (!hasApplicableMixinExtras) {
         dependencies {
             implementation include("io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras")
@@ -110,6 +110,12 @@ afterEvaluate {
                 forgeRuntimeLibrary "io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras"
             }
         }
+    }
+}
+
+jar {
+    from(rootProject.file("LICENSE")) {
+        rename { "${it}_${archivesBaseName}"}
     }
 }
 
@@ -142,10 +148,6 @@ preprocess {
     }
     patternAnnotation.set(rootProject.properties.pattern_annotation)
 }
-
-System.out.println(SemverUtils.convertSemverPredicateToMavenPredicate(">=1.18.2 <1.19")) // [1.18.2,1.19)
-System.out.println(SemverUtils.convertSemverPredicateToMavenPredicate(">=1.18.2")) // [1.18.2,)
-System.out.println(SemverUtils.convertSemverPredicateToMavenPredicate("*")) // *
 
 processResources {
     def dep = rootProject.properties.minecraft_dependency.toString()
@@ -182,7 +184,6 @@ processResources {
                 "contributors": rootProject.properties.mod_contributors.toString().split(","),
                 "authors": rootProject.properties.mod_authors.toString().split(",")
         ]
-        System.out.println(map)
         expand map
     }
     doLast {
