@@ -162,6 +162,7 @@ processResources {
     inputs.property "mod_display_name", rootProject.properties.mod_display_name
     inputs.property "mod_description", rootProject.properties.mod_description
     inputs.property "homepage_url", rootProject.properties.homepage_url
+    inputs.property "sources_url", rootProject.properties.sources_url
     inputs.property "issue_tracker_url", rootProject.properties.issue_tracker_url
     inputs.property "license", rootProject.properties.license
     inputs.property "fabricloader", rootProject.properties.fabricloader
@@ -178,6 +179,7 @@ processResources {
                 "mod_display_name": rootProject.properties.mod_display_name,
                 "mod_description": rootProject.properties.mod_description,
                 "homepage_url": rootProject.properties.homepage_url,
+                "sources_url": rootProject.properties.sources_url,
                 "issue_tracker_url": rootProject.properties.issue_tracker_url,
                 "license": rootProject.properties.license,
                 "fabricloader": rootProject.properties.fabricloader,

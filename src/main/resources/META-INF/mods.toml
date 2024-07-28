@@ -12,7 +12,6 @@ authors = '${String.join(", ",authors)}'
 credits = '${String.join(", ",contributors)}'
 displayURL = "$homepage_url"
 description = "$mod_description"
-#logoFile = ""
 
 [[dependencies.${mod_id}]]
 modId = "${forgeid}"

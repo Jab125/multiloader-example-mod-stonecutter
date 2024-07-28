@@ -8,6 +8,7 @@
   "icon": "icon.png",
   "contact": {
     "homepage": "$homepage_url",
+    "sources": "$sources_url",
     "issues": "$issue_tracker_url"
   },
   "authors": ["${String.join('\u0022,\u0022',authors)}"],
