@@ -1,6 +1,8 @@
 package com.example.examplemod;
 
 import net.minecraft.client.Minecraft;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 //#if LOADER == FORGE
 //$$ import net.minecraftforge.fml.common.Mod;
@@ -12,6 +14,7 @@ import net.minecraft.client.Minecraft;
 //#endif
 public class ExampleMod {
     public static final String MOD_ID = "examplemod";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     //#if LOADER <= FORGE
     //$$ public ExampleMod() {
@@ -27,7 +30,8 @@ public class ExampleMod {
         //#elseif LOADER == NEOFORGE
         //$$ String loader = "NeoForge";
         //#endif
-        System.out.printf("Hello %s World!%n", loader);
-        System.out.println("Minecraft: " + Minecraft.instance);
+        LOGGER.info("Hello {} World!", loader);
+        // This is a test to assert that the access widener works.
+        LOGGER.info("Minecraft: {}", Minecraft.instance);
     }
 }
