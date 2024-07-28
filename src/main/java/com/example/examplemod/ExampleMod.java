@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 //#endif
 public class ExampleMod {
     public static final String MOD_ID = "examplemod";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final Logger LOGGER = LoggerFactory.getLogger(net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata().getName());
 
     //#if LOADER <= FORGE
     //$$ public ExampleMod() {

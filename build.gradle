@@ -117,6 +117,7 @@ jar {
     from(rootProject.file("LICENSE")) {
         rename { "${it}_${archivesBaseName}"}
     }
+    exclude("${rootProject.properties.patterns_class.replace(".", "/")}.class", "${rootProject.properties.pattern_annotation.replace(".", "/")}.class") // These will not be needed in production, don't reference them at all in other classes!
 }
 
 
