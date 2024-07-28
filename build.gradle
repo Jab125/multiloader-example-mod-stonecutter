@@ -1,0 +1,247 @@
+import com.replaymod.gradle.preprocess.PreprocessTask
+import bs.ModLoader
+import bs.SemverUtils
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import org.apache.ivy.osgi.util.Version
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import static bs.ModLoader.FABRIC
+import static bs.ModLoader.FORGE
+import static bs.ModLoader.NEOFORGE
+
+plugins {
+    id 'java'
+}
+
+group = rootProject.properties.mod_package
+version = rootProject.properties.mod_version
+ModLoader loader = ModLoader.fromProject(project)
+
+project.ext["loom.platform"] = loader.friendlyName
+
+repositories {
+    mavenCentral()
+    // for Mod Menu
+    maven {
+        url = "https://maven.terraformersmc.com/releases"
+    }
+    maven {
+        url = "https://maven.neoforged.net/releases"
+    }
+    // For Forge
+    maven {
+        url = "https://maven.minecraftforge.net/"
+    }
+}
+apply plugin: 'dev.architectury.loom'
+
+def coreVersion = project.name == getRootProject().projectDir.toPath().resolve("versions/mainProject").toFile().getText("UTF-8")
+loom {
+    if (coreVersion) {
+        accessWidenerPath = getRootProject().projectDir.toPath().resolve("src/main/resources/${E.p.mod_id}.accesswidener").toFile()
+    } else {
+        File file = project.buildDir.toPath().resolve("preprocessed/main/resources/${E.p.mod_id}.accesswidener").toFile()
+        if (file.exists()) {
+            accessWidenerPath = file
+        } else {
+            project.logger.warn("Access widener file not generated yet!")
+        }
+    }
+}
+// Use vanilla mixin on Forge
+if (loader == FORGE) {
+    loom {
+        forge {
+            useCustomMixin = false
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraft:minecraft:$rootProject.properties.minecraft"
+    mappings loom.officialMojangMappings()
+    if (loader == FABRIC) {
+        modImplementation "net.fabricmc:fabric-loader:$rootProject.properties.fabricloader"
+        modCompileOnly "com.terraformersmc:modmenu:$rootProject.properties.modmenu", {
+            // Don't transitively pull in Mod Menu's Fabric deps
+            exclude module: "net.fabricmc"
+            exclude module: "net.fabricmc.fabric-api"
+        }
+        modLocalRuntime "com.terraformersmc:modmenu:$rootProject.properties.modmenu", {
+            // Don't transitively pull in Mod Menu's Fabric deps
+            exclude module: "net.fabricmc"
+            exclude module: "net.fabricmc.fabric-api"
+        }
+        if (rootProject.properties.fabric_api_modules == "*") {
+            if (rootProject.properties.include_fabric_api_modules == "true") {
+                throw new RuntimeException("You can't include the entirety of Fabric API!")
+            }
+            modApi "net.fabricmc.fabric-api:fabric-api:$rootProject.properties.fabric_api_version"
+        } else {
+            for (String module in rootProject.properties.fabric_api_modules.split(",") as String[]) {
+                var dep = fabricApi.module(module, "$rootProject.properties.fabric_api_version")
+                modApi dep
+                if (rootProject.properties.include_fabric_api_modules == "true") {
+                    include(dep)
+                }
+            }
+        }
+    } else if (loader == FORGE) {
+        forge "net.minecraftforge:forge:$rootProject.properties.forge"
+    } else if (loader == NEOFORGE) {
+        neoForge "net.neoforged:neoforge:$rootProject.properties.neoforge"
+    }
+
+//    doLast {
+//        var mixinextras = rootProject.properties.mixinextras.toString()
+//        if (!mixinextras.isBlank()) {
+//            //if ()
+//            E.debug(project)
+//        }
+//    }
+}
+
+afterEvaluate {
+    def hasApplicableMixinExtras = project.getConfigurations().getByName("runtimeClasspath").getAllDependencies().stream().anyMatch(a -> {
+        //System.out.println(a.getName() + ", " + a.getGroup() + ", " + a.getVersion() + ", " + (a.getGroup() != "io.github.llamalad7" ? null : new Version(a.getVersion()) >= new Version(rootProject.properties.mixinextras.toString())))
+        return a.getName().startsWith("mixinextras") && a.getGroup().equals("io.github.llamalad7") && new Version(a.getVersion()) >= (new Version(rootProject.properties.mixinextras.toString()))
+    });
+    System.out.println("ME: " + hasApplicableMixinExtras)
+    if (!hasApplicableMixinExtras) {
+        dependencies {
+            implementation include("io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras")
+            if (loader == FORGE || loader == NEOFORGE) {
+                forgeRuntimeLibrary "io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras"
+            }
+        }
+    }
+}
+
+
+apply plugin: 'com.jab125.preprocessor.preprocess'
+preprocess {
+    def (major, minor, patch) = rootProject.properties.minecraft.toString().tokenize('-')[0].tokenize('.')
+    def version = "${major}${minor.padLeft(2, '0')}${(patch ?: '').padLeft(2, '0')}" as int
+    vars.put("MC", version)
+    vars.put("LOADER", loader.id)
+    // functionality defined in kotlin
+    parsers.put("LOADER", modLoaderParser)
+    parsers.put("MC", minecraftVersionParser)
+    keywords.set([
+            ".java": PreprocessTask.DEFAULT_KEYWORDS,
+            ".kt": PreprocessTask.DEFAULT_KEYWORDS,
+            ".json": PreprocessTask.DEFAULT_KEYWORDS,
+            ".mcmeta": PreprocessTask.DEFAULT_KEYWORDS,
+            ".cfg": PreprocessTask.CFG_KEYWORDS,
+            ".accesswidener": PreprocessTask.CFG_KEYWORDS,
+            ".properties": PreprocessTask.CFG_KEYWORDS,
+            ".vert": PreprocessTask.DEFAULT_KEYWORDS,
+            ".frag": PreprocessTask.DEFAULT_KEYWORDS,
+    ])
+    // Using tabs? Use this!
+    if (rootProject.properties.uses_tabs == "true") {
+        indentationCharacter.set('\t' as char)
+    } else {
+        indentationCharacter.set(' ' as char)
+    }
+    patternAnnotation.set(rootProject.properties.pattern_annotation)
+}
+
+System.out.println(SemverUtils.convertSemverPredicateToMavenPredicate(">=1.18.2 <1.19")) // [1.18.2,1.19)
+System.out.println(SemverUtils.convertSemverPredicateToMavenPredicate(">=1.18.2")) // [1.18.2,)
+System.out.println(SemverUtils.convertSemverPredicateToMavenPredicate("*")) // *
+
+processResources {
+    def dep = rootProject.properties.minecraft_dependency.toString()
+    if (loader == FORGE || loader == NEOFORGE) {
+        dep = SemverUtils.convertSemverPredicateToMavenPredicate(dep)
+    }
+
+    inputs.property "forgeid", loader == NEOFORGE ? "neoforge" : "forge"
+    inputs.property "minecraft_dependency", dep
+    inputs.property "mod_version", version
+    inputs.property "mod_id", rootProject.properties.mod_id
+    inputs.property "mod_display_name", rootProject.properties.mod_display_name
+    inputs.property "mod_description", rootProject.properties.mod_description
+    inputs.property "homepage_url", rootProject.properties.homepage_url
+    inputs.property "issue_tracker_url", rootProject.properties.issue_tracker_url
+    inputs.property "license", rootProject.properties.license
+    inputs.property "fabricloader", rootProject.properties.fabricloader
+    inputs.property "contributors", rootProject.properties.mod_contributors.toString()
+    inputs.property "authors", rootProject.properties.mod_authors.toString()
+    inputs.property "fabric_api_modules", rootProject.properties.fabric_api_modules
+
+    filesMatching(["fabric.mod.json", "META-INF/mods.toml", "quilt.mod.json"]) {
+        def map = [
+                "forgeid": loader == NEOFORGE ? "neoforge" : "forge",
+                "minecraft": dep,
+                "mod_version": version,
+                "mod_id": rootProject.properties.mod_id,
+                "mod_display_name": rootProject.properties.mod_display_name,
+                "mod_description": rootProject.properties.mod_description,
+                "homepage_url": rootProject.properties.homepage_url,
+                "issue_tracker_url": rootProject.properties.issue_tracker_url,
+                "license": rootProject.properties.license,
+                "fabricloader": rootProject.properties.fabricloader,
+                "contributors": rootProject.properties.mod_contributors.toString().split(","),
+                "authors": rootProject.properties.mod_authors.toString().split(",")
+        ]
+        System.out.println(map)
+        expand map
+    }
+    doLast {
+        if (loader == NEOFORGE) {
+            fileTree(dir: outputs.files.asPath, include: "META-INF/mods.toml").each { File file ->
+                file.text += "\n\n[[mixins]]\nconfig = \"${rootProject.properties.mod_id}.mixins.json\""
+            }
+            fileTree(dir: outputs.files.asPath, include: "META-INF/mods.toml").each { File file ->
+                Files.copy(file.toPath(), java.nio.file.Path.of(outputs.files.asPath).resolve("META-INF/neoforge.mods.toml"), StandardCopyOption.REPLACE_EXISTING)
+                file.delete()
+            }
+        }
+        if (loader == FABRIC) {
+            fileTree(dir: outputs.files.asPath, include: "fabric.mod.json").each { File file ->
+                def parse = new JsonSlurper().parse(file)
+                def fModulesString = rootProject.properties.fabric_api_modules
+                if (fModulesString == "*") {
+                    parse.depends["fabric-api"] = ">=" + rootProject.properties.fabric_api_version
+                } else {
+                    def fModules = fModulesString.split(",")
+                    for (String s in fModules) {
+                        // ^ means until the next major
+                        parse.depends[s] = "^" + fabricApi.module(s, rootProject.properties.fabric_api_version).getVersion()
+                    }
+                }
+                file.text = JsonOutput.prettyPrint(JsonOutput.toJson(parse))
+            }
+        }
+    }
+
+    if (loader == FORGE || loader == NEOFORGE) {
+        exclude 'fabric.mod.json'
+    } else if (loader == FABRIC) {
+        exclude 'META-INF/mods.toml', 'META-INF/accesstransformer.cfg', 'pack.mcmeta'
+    }
+}
+
+if (!coreVersion) {
+    jar.dependsOn("preprocessResources")
+    validateAccessWidener.dependsOn("preprocessResources")
+    build.dependsOn("validateAccessWidener")
+}
+
+remapJar {
+    if (loader == FORGE || loader == NEOFORGE) {
+        atAccessWideners.add("${rootProject.properties.mod_id}.accesswidener")
+    }
+}
+
+if (loader == FORGE) {
+    configurations.all {
+        resolutionStrategy {
+            force 'net.sf.jopt-simple:jopt-simple:5.0.4'
+        }
+    }
+}
