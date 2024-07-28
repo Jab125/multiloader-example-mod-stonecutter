@@ -23,11 +23,11 @@ public class ExampleMod {
         /*return ModList.get().getModContainerById(modId).orElseThrow().getModInfo().getDisplayName();*/
     }
 
-//    #if LOADER <= FORGE
-//    $$ public ExampleMod() {
-//    $$     onInitialize();
-//    $$ }
-//    #endif
+    //? if forge || neoforge {
+    /*public ExampleMod() {
+        onInitialize();
+    }
+    *///?}
 
     public void onInitialize() {
         //? if fabric
