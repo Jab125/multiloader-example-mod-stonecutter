@@ -40,7 +40,6 @@ subprojects {
     }
     afterEvaluate {
         val remapJar = project.tasks.findByName("remapJar")
-        System.out.println(remapJar)
         if (remapJar != null && remapJar.hasProperty("archiveFile")) {
             packageJar.dependsOn(remapJar)
             packageJar.from(remapJar.withGroovyBuilder { getProperty("archiveFile") })
