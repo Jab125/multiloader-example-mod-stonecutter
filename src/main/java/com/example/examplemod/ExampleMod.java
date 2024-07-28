@@ -1,10 +1,10 @@
 package com.example.examplemod;
 
 //? if fabric
-/*import net.fabricmc.loader.api.FabricLoader;*/
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 //? if forge
-import net.minecraftforge.fml.ModList;
+/*import net.minecraftforge.fml.ModList;*/
 //? if neoforge
 /*import net.neoforged.fml.ModList;*/
 import org.slf4j.Logger;
@@ -16,9 +16,9 @@ public class ExampleMod {
 
     private static String getDisplayName(String modId) {
         //? if fabric
-        /*return FabricLoader.getInstance().getModContainer(modId).orElseThrow().getMetadata().getName();*/
+        return FabricLoader.getInstance().getModContainer(modId).orElseThrow().getMetadata().getName();
         //? if forge
-        return ModList.get().getModContainerById(modId).orElseThrow().getModInfo().getDisplayName();
+        /*return ModList.get().getModContainerById(modId).orElseThrow().getModInfo().getDisplayName();*/
         //? if neoforge
         /*return ModList.get().getModContainerById(modId).orElseThrow().getModInfo().getDisplayName();*/
     }
@@ -31,9 +31,9 @@ public class ExampleMod {
 
     public void onInitialize() {
         //? if fabric
-        /*String loader = "Fabric";*/
+        String loader = "Fabric";
         //? if forge
-        String loader = "Forge";
+        /*String loader = "Forge";*/
         //? if neoforge
         /*String loader = "NeoForge";*/
         LOGGER.info("Hello {} World!", loader);
