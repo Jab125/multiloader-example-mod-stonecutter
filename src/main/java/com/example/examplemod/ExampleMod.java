@@ -29,6 +29,5 @@ public class ExampleMod {
         //#endif
         System.out.printf("Hello %s World!%n", loader);
         System.out.println("Minecraft: " + Minecraft.instance);
-        //System.out.println("\u0022");
     }
 }
