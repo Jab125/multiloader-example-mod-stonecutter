@@ -96,19 +96,10 @@ dependencies {
     } else if (loader == NEOFORGE) {
         neoForge "net.neoforged:neoforge:$rootProject.properties.neoforge"
     }
-
-//    doLast {
-//        var mixinextras = rootProject.properties.mixinextras.toString()
-//        if (!mixinextras.isBlank()) {
-//            //if ()
-//            E.debug(project)
-//        }
-//    }
 }
 
 afterEvaluate {
     def hasApplicableMixinExtras = project.getConfigurations().getByName("runtimeClasspath").getAllDependencies().stream().anyMatch(a -> {
-        //System.out.println(a.getName() + ", " + a.getGroup() + ", " + a.getVersion() + ", " + (a.getGroup() != "io.github.llamalad7" ? null : new Version(a.getVersion()) >= new Version(rootProject.properties.mixinextras.toString())))
         return a.getName().startsWith("mixinextras") && a.getGroup().equals("io.github.llamalad7") && new Version(a.getVersion()) >= (new Version(rootProject.properties.mixinextras.toString()))
     });
     System.out.println("ME: " + hasApplicableMixinExtras)
