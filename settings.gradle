@@ -1,0 +1,37 @@
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+        maven { url = "https://maven.fabricmc.net" }
+        maven { url = "https://maven.architectury.dev" }
+        maven { url = "https://maven.minecraftforge.net" }
+        maven { url = "https://maven.kikugie.dev/releases" }
+    }
+}
+
+buildscript {
+    System.setProperty("rootDir", rootProject.projectDir.absolutePath.toString())
+    Properties properties = new Properties()
+    var path = Path.of(System.getProperty("rootDir")).resolve("gradle.properties")
+    properties.load(path.newInputStream())
+}
+
+plugins {
+    id "dev.kikugie.stonecutter" version "$stonecutter_version"
+}
+
+var loaders = properties["enabled_platforms"].toString().split(",")
+
+stonecutter {
+    shared {
+        // Stonecutter requires a semantic version
+        versions loaders.collect { "0.0.0-" + it}
+    }
+
+    create rootProject
+}
+
+rootProject.name = "multiloader-example-mod"

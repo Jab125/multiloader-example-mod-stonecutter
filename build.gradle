@@ -1,4 +1,3 @@
-import com.replaymod.gradle.preprocess.PreprocessTask
 import bs.ModLoader
 import bs.SemverUtils
 import groovy.json.JsonOutput
@@ -19,6 +18,10 @@ group = rootProject.properties.mod_package
 version = rootProject.properties.mod_version
 ModLoader loader = ModLoader.fromProject(project)
 archivesBaseName = "${rootProject.properties.mod_id}-$loader.friendlyName"
+
+def packageJar = tasks.create("packageJar", Copy.class) {
+    into("${rootProject.layout.buildDirectory.get()}/libs/${E.p["mod_version"]}")
+}
 
 project.ext["loom.platform"] = loader.friendlyName
 
@@ -47,18 +50,15 @@ repositories {
     }
 }
 apply plugin: 'dev.architectury.loom'
-
-def coreVersion = project.name == getRootProject().projectDir.toPath().resolve("versions/mainProject").toFile().getText("UTF-8")
+stonecutter.const("fabric", loader == FABRIC)
+stonecutter.const("forge", loader == FORGE)
+stonecutter.const("neoforge", loader == NEOFORGE)
 loom {
-    if (coreVersion) {
-        accessWidenerPath = getRootProject().projectDir.toPath().resolve("src/main/resources/${E.p.mod_id}.accesswidener").toFile()
+    File file = project.buildDir.toPath().resolve("chiseledSrc/main/resources/${E.p.mod_id}.accesswidener").toFile()
+    if (file.exists()) {
+        accessWidenerPath = file
     } else {
-        File file = project.buildDir.toPath().resolve("preprocessed/main/resources/${E.p.mod_id}.accesswidener").toFile()
-        if (file.exists()) {
-            accessWidenerPath = file
-        } else {
-            project.logger.warn("Access widener file not generated yet!")
-        }
+        project.logger.warn("Access widener file not generated yet!")
     }
 }
 // Use vanilla mixin on Forge
@@ -127,37 +127,6 @@ jar {
     from(rootProject.file("LICENSE")) {
         rename { "${it}_${archivesBaseName}"}
     }
-    exclude("${rootProject.properties.patterns_class.replace(".", "/")}.class", "${rootProject.properties.pattern_annotation.replace(".", "/")}.class") // These will not be needed in production, don't reference them at all in other classes!
-}
-
-
-apply plugin: 'com.jab125.preprocessor.preprocess'
-preprocess {
-    def (major, minor, patch) = rootProject.properties.minecraft.toString().tokenize('-')[0].tokenize('.')
-    def version = "${major}${minor.padLeft(2, '0')}${(patch ?: '').padLeft(2, '0')}" as int
-    vars.put("MC", version)
-    vars.put("LOADER", loader.id)
-    // functionality defined in kotlin
-    parsers.put("LOADER", modLoaderParser)
-    parsers.put("MC", minecraftVersionParser)
-    keywords.set([
-            ".java": PreprocessTask.DEFAULT_KEYWORDS,
-            ".kt": PreprocessTask.DEFAULT_KEYWORDS,
-            ".json": PreprocessTask.DEFAULT_KEYWORDS,
-            ".mcmeta": PreprocessTask.DEFAULT_KEYWORDS,
-            ".cfg": PreprocessTask.CFG_KEYWORDS,
-            ".accesswidener": PreprocessTask.CFG_KEYWORDS,
-            ".properties": PreprocessTask.CFG_KEYWORDS,
-            ".vert": PreprocessTask.DEFAULT_KEYWORDS,
-            ".frag": PreprocessTask.DEFAULT_KEYWORDS,
-    ])
-    // Using tabs? Use this!
-    if (rootProject.properties.uses_tabs == "true") {
-        indentationCharacter.set('\t' as char)
-    } else {
-        indentationCharacter.set(' ' as char)
-    }
-    patternAnnotation.set(rootProject.properties.pattern_annotation)
 }
 
 processResources {
@@ -234,14 +203,6 @@ processResources {
     }
 }
 
-if (!coreVersion) {
-    jar.dependsOn("preprocessResources")
-    validateAccessWidener.dependsOn("preprocessResources")
-    classes.dependsOn("preprocessResources")
-    build.dependsOn("validateAccessWidener")
-    compileJava.dependsOn("validateAccessWidener")
-}
-
 remapJar {
     if (loader == FORGE || loader == NEOFORGE) {
         atAccessWideners.add("${rootProject.properties.mod_id}.accesswidener")
@@ -254,4 +215,10 @@ if (loader == FORGE) {
             force 'net.sf.jopt-simple:jopt-simple:5.0.4'
         }
     }
+}
+
+afterEvaluate {
+    packageJar.dependsOn(remapJar)
+    packageJar.from(remapJar.archiveFile)
+    build.finalizedBy(packageJar)
 }

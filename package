@@ -1,5 +1,5 @@
 #!/bin/sh
 
 chmod +x gradlew
-./gradlew preprocessResources || 0
-./gradlew build
+./gradlew setupChiseledBuild || 0
+./gradlew chiseledBuild
