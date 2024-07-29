@@ -44,6 +44,13 @@ repositories {
             }
         }
     }
+    // For Patchment mappings
+    if (rootProject.properties.parchment_version) {
+        maven {
+            name = 'ParchmentMC'
+            url = 'https://maven.parchmentmc.org'
+        }
+    }
     // For Forge
     maven {
         url = "https://maven.minecraftforge.net/"
@@ -74,7 +81,14 @@ if (loader == FORGE) {
 
 dependencies {
     minecraft "net.minecraft:minecraft:$rootProject.properties.minecraft"
-    mappings loom.officialMojangMappings()
+    if (rootProject.properties.parchment_version) {
+        mappings loom.layered {
+            officialMojangMappings()
+            parchment("org.parchmentmc.data:parchment-${rootProject.properties.parchment_version}@zip")
+        }
+    } else {
+        mappings loom.officialMojangMappings()
+    }
     if (loader == FABRIC) {
         modImplementation "net.fabricmc:fabric-loader:$rootProject.properties.fabricloader"
         modCompileOnly "com.terraformersmc:modmenu:$rootProject.properties.modmenu", {
