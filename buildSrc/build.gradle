@@ -8,6 +8,4 @@ repositories {
 dependencies {
     // This is used for the parsing of versions.
     implementation "net.fabricmc:fabric-loader:0.15.11"
-    // https://mvnrepository.com/artifact/org.apache.ivy/ivy
-    implementation 'org.apache.ivy:ivy:2.5.2'
 }
