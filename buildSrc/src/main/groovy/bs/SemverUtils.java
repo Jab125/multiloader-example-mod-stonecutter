@@ -21,6 +21,7 @@ public class SemverUtils {
         } else if (interval.getMax() == null) {
             return String.format("%c%s,)", interval.isMinInclusive() ? '[' : '(', interval.getMin());
         } else {
+            if (interval.getMin().equals(interval.getMax())) return String.format("[%s]", interval.getMin());
             return String.format("%c%s,%s%c", interval.isMinInclusive() ? '[' : '(', interval.getMin(), interval.getMax(), interval.isMaxInclusive() ? ']' : ')');
         }
     }
