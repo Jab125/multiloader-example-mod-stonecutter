@@ -2,7 +2,7 @@ import bs.ModLoader
 import bs.SemverUtils
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
-import org.apache.ivy.osgi.util.Version
+import net.fabricmc.loader.api.Version
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -123,15 +123,17 @@ dependencies {
 }
 
 afterEvaluate {
-    def hasApplicableMixinExtras = project.getConfigurations().getByName("runtimeClasspath").getAllDependencies().stream().anyMatch(a -> {
-        return a.getName().startsWith("mixinextras") && a.getGroup().equals("io.github.llamalad7") && new Version(a.getVersion()) >= (new Version(rootProject.properties.mixinextras.toString()))
-    })
+    if (rootProject.properties.mixinextras) {
+        def hasApplicableMixinExtras = project.getConfigurations().getByName("runtimeClasspath").getAllDependencies().stream().anyMatch(a -> {
+            return a.getName().startsWith("mixinextras") && a.getGroup().equals("io.github.llamalad7") && Version.parse(a.getVersion()) >= (Version.parse(rootProject.properties.mixinextras.toString()))
+        })
 
-    if (!hasApplicableMixinExtras) {
-        dependencies {
-            implementation include("io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras")
-            if (loader == FORGE || loader == NEOFORGE) {
-                forgeRuntimeLibrary "io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras"
+        if (!hasApplicableMixinExtras) {
+            dependencies {
+                implementation include("io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras")
+                if (loader == FORGE || loader == NEOFORGE) {
+                    forgeRuntimeLibrary "io.github.llamalad7:mixinextras-$loader.friendlyName:$rootProject.properties.mixinextras"
+                }
             }
         }
     }
